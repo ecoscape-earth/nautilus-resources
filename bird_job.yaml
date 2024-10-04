@@ -1,0 +1,40 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: bird-job
+spec:
+  template:
+    spec:
+      containers:
+      - name: coen-resnet-run
+        image: gitlab-registry.nrp-nautilus.io/prp/jupyter-stack/prp:latest
+        command:
+        - sh
+        - -c
+        - "sudo chmod 777 /birdvol && cd /birdvol && sudo apt-get install gdal-bin && pip install git+https://github.com/ecoscape-earth/scgt.git@v3 && pip install git+https://github.com/ecoscape-earth/ecoscape-utils.git@v3 && pip install git+https://github.com/ecoscape-earth/ecoscape-layers.git@v3 && pip install git+https://github.com/ecoscape-earth/ecoscape-connectivity.git@v3 && python bird_run.py"
+        volumeMounts:
+        - name: birdvol
+          mountPath: /birdvol
+        - name: dshm
+          mountPath: /dev/shm
+        resources:
+          limits:
+            memory: 32Gi
+            cpu: "4"
+            nvidia.com/rtxa6000: 1
+            ephemeral-storage: 32Gi
+          requests:
+            memory: 32Gi
+            cpu: "4"
+            nvidia.com/rtxa6000: 1
+            ephemeral-storage: 32Gi
+      volumes:
+      - name: birdvol
+        persistentVolumeClaim:
+          claimName: birdpvc
+      - name: dshm
+        emptyDir:
+          medium: Memory
+      restartPolicy: Never
+  backoffLimit: 1
+
